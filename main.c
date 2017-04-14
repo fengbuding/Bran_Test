@@ -73,14 +73,29 @@ com_err handle_data(void)
     }
     char s[100] = {0};
     char s1[12] = {0};
+    float vol_3sum = 0;
     switch(f_cmd)
     {
         case 0:                                           //0--Burn Firmware Prepare
+               DCIN_EN();
+               Delay_ms(500);             //延时等待mos管打开
+               get_ChannelVale(vol, 0);
+               //AVCC+RTC+DRAM = 3+3.3+1.5 = 7.8V
+               vol_3sum = vol[2] + vol[4] + vol[6];
+               printf("AVCC %.2f RTC %.2f DRAM %.2f\r\nvol_3sum %.2f\r\n", vol[2], vol[4], vol[6], vol_3sum);              
                VBUS_DIS();
                BAT_DIS();           
                DCIN_DIS(); 
                BOOT_EN();
-               strcpy(s, "Success");
+               Delay_ms(500);           //boot脚连上，加延时使DCIN断开完全
+               if(vol_3sum < 3)
+               {
+                 strcpy(s, "Fail");
+               }
+               else
+               {
+                strcpy(s, "Success");
+               }
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);
                break;
@@ -134,7 +149,7 @@ com_err handle_data(void)
                //VBUS_EN();
                //DCIN_DIS();                
                //BAT_DIS();
-               get_ChannelVale(vol);        // do something
+               get_ChannelVale(vol, 1);        // do something
                for(i = 0; i < 7; i++)
                {
                    sprintf(s1, "Vol%d=%.2f,", i, vol[i]);  //s1--10byte
@@ -175,21 +190,37 @@ int main(void)
     adc_start();
     TIM2_Configuration();
     TIM3_Configuration();
-    IWDG_Init(5,1250);    //超过4s，复位
+    IWDG_Init(4,1250);    //超过2s，复位
     printf("system start...\r\n");
     for(;;)
     {	
       if(USART2_RX_STA & 0x8000)
       {
+          f_err_vol = 0;
           error = handle_data();
           printf("error code: %d\r\n",error);                 
           USART2_RX_STA = 0;
+      }
+      if(f_err_vol == 1)
+      {
+        if((T_err ^ 30) == 0)
+        {
+            T_err = 0;
+            bsp_LedToggle(RED);
+        }
       }
       if((T ^ 100) == 0)
       {
         T = 0;
         bsp_LedToggle(GREEN);
       }
+//      get_ChannelVale(vol, 0);
+//      char i = 0;
+//      for(i = 0; i < 7; i++)
+//      {
+//        printf("%.2f ", vol[i]);
+//      }
+//      printf("%.2f\r\n", vol[7]);
       IWDG_Feed();
     }
 }

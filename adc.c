@@ -8,8 +8,20 @@
 **/
 #include "stm32f10x.h"
 #include "adc.h"
+
 uint16_t ad_value[N][CH_NUM]={0};
-const float arr_per[8] = {0.125, 0.83333, 0.5, 0.45455, 0.45455, 0.3, 1, 0.3};
+const float arr_per[8] = {0.3, 0.83333, 0.5, 0.45455, 0.45455, 0.3, 1, 0.3};
+const float arr_vol[8] = {4.85, 1.8 ,3.0, 3.3 ,3.3 ,5.0,1.5 ,5.0};
+/*
+Vol0--LED --|12.8| --4.85 
+Vol1--TVOC -- 1.8   
+Vol2--AVCC  --3.0
+Vol3--WIFI --3.3  
+Vol4--RTC --3.3
+Vol5--IPSOUT --5.0
+Vol6--DRAM  -- 1.5  
+Vol7--5V --5.0
+*/
 /** @para none
   * @ret  none
   * @brief adc对应的gpio初始化
@@ -112,7 +124,7 @@ void adc_start(void)
     DMA_Cmd(DMA1_Channel1,ENABLE);    
 }
 
-void get_ChannelVale(float arr[])
+void get_ChannelVale(float arr[], u8 bit)
 {
   u32 sum = 0;
   for(u8 i = 0; i < CH_NUM; i++)
@@ -125,6 +137,17 @@ void get_ChannelVale(float arr[])
     arr[i] = sum;
     arr[i] = arr[i] * 3.3 / 4096;
     arr[i] /= arr_per[i]; 
+    if(bit != 0)
+    {
+        if(fabs(arr[i] - arr_vol[i]) > (arr_vol[i] * 0.3))   //电压测量值偏差超过30%
+        {
+          if(f_err_vol == 0)
+          {
+              f_err_vol = 1;
+              T_err = 0;
+          }
+        }
+    }
     sum = 0;
   }
 }

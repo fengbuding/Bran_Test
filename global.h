@@ -17,6 +17,8 @@ extern char USART2_RX_BUF[USART2_MAX_RECV_LEN];
 extern uint16_t USART2_RX_STA;
 extern u8 f_cmd;              //√¸¡Ó±Í÷æŒª
 extern u32 T;
+extern u32 T_err;
+extern u8 f_err_vol;
 typedef enum
 {
   err_none,

@@ -112,6 +112,7 @@ void TIM3_IRQHandler(void)
 	{	
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);  
         T++;
+        T_err++;
 	}		 	
 }
 void SysTick_Handler(void)
