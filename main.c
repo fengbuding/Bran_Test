@@ -94,7 +94,7 @@ com_err handle_data(void)
                }
                else
                {
-                strcpy(s, "Success");
+                 strcpy(s, "Success");
                }
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);
@@ -102,13 +102,15 @@ com_err handle_data(void)
         case 1:                                    //1--Burn Firmware Start
                VBUS_EN();
                BAT_DIS();           
-               DCIN_DIS();  
+               DCIN_DIS(); 
+               Delay_ms(500);
                strcpy(s,"Success");
                send_ack(s);
                printf("cmd%d ok...\r\n",f_cmd);          
                break;
         case 2:                                     //2--Burn Firmware End
-               BOOT_DIS();
+               BOOT_DIS();             
+                                      //断开boot连接，延时
                strcpy(s, "Success");
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);          
@@ -203,13 +205,13 @@ int main(void)
       }
       if(f_err_vol == 1)
       {
-        if((T_err ^ 30) == 0)
+        if(T_err > 30)
         {
             T_err = 0;
             bsp_LedToggle(RED);
         }
       }
-      if((T ^ 100) == 0)
+      if(T > 100)
       {
         T = 0;
         bsp_LedToggle(GREEN);
