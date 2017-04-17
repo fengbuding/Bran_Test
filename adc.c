@@ -124,7 +124,7 @@ void adc_start(void)
     DMA_Cmd(DMA1_Channel1,ENABLE);    
 }
 
-void get_ChannelVale(float arr[], u8 bit)
+void get_ChannelVale(float arr[])
 {
   u32 sum = 0;
   for(u8 i = 0; i < CH_NUM; i++)
@@ -137,17 +137,6 @@ void get_ChannelVale(float arr[], u8 bit)
     arr[i] = sum;
     arr[i] = arr[i] * 3.3 / 4096;
     arr[i] /= arr_per[i]; 
-    if(bit != 0)
-    {
-        if(fabs(arr[i] - arr_vol[i]) > (arr_vol[i] * 0.3))   //电压测量值偏差超过30%
-        {
-          if(f_err_vol == 0)
-          {
-              f_err_vol = 1;
-              T_err = 0;
-          }
-        }
-    }
     sum = 0;
   }
 }

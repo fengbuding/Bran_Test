@@ -74,12 +74,13 @@ com_err handle_data(void)
     char s[100] = {0};
     char s1[12] = {0};
     float vol_3sum = 0;
+    u32 sum0 = 0;
     switch(f_cmd)
     {
         case 0:                                           //0--Burn Firmware Prepare
                DCIN_EN();
                Delay_ms(500);             //延时等待mos管打开
-               get_ChannelVale(vol, 0);
+               get_ChannelVale(vol);
                //AVCC+RTC+DRAM = 3+3.3+1.5 = 7.8V
                vol_3sum = vol[2] + vol[4] + vol[6];
                printf("AVCC %.2f RTC %.2f DRAM %.2f\r\nvol_3sum %.2f\r\n", vol[2], vol[4], vol[6], vol_3sum);              
@@ -125,9 +126,9 @@ com_err handle_data(void)
                break;
         case 4:                                        //4--Change Usb A0B1--USB--VBUS打开
                VBUS_EN(); 
+               BAT_EN();                    //baten
                Delay_ms(300);              //使电源稳定，再关闭以前的电源
-               DCIN_DIS();
-               BAT_DIS();
+               DCIN_DIS();           
                strcpy(s, "Success");
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);
@@ -136,7 +137,6 @@ com_err handle_data(void)
                DCIN_EN();
                Delay_ms(300);              //使电源稳定，再关闭以前的电源
                VBUS_DIS();   
-               BAT_DIS();
                strcpy(s, "Success");
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);
@@ -144,17 +144,38 @@ com_err handle_data(void)
         case 6:                                         //6--Change Usb A1B1--底座+USB打开
                VBUS_EN();   
                DCIN_EN();
-               Delay_ms(300);              //使电源稳定，再关闭以前的电源
-               BAT_DIS();                    
+               Delay_ms(300);              //使电源稳定，再关闭以前的电源                    
                strcpy(s, "Success");
                send_ack(s);
                printf("\r\ncmd%d ok...\r\n", f_cmd);
                break;
         case 7:                                             //7--Get Voltage 
-               //VBUS_EN();
-               //DCIN_DIS();                
-               //BAT_DIS();
-               get_ChannelVale(vol, 1);        // do something
+               get_ChannelVale(vol);        // do something
+               for(i = 0; i < N; i++)
+               {
+                  Delay_ms(100);
+                  sum0 += ad_value[i][0];
+               }
+              // printf(">>>>sum0 %d\r\n", sum0);
+               vol[0] = (sum0 / N);
+              // printf(">>>>vol[0] %f\r\n", vol[0]);
+               vol[0] = vol[0] * 3.3 / 4096;
+              // printf(">>>>vol[0] %f\r\n", vol[0]);
+               vol[0] /= arr_per[0]; 
+              // printf(">>>>vol[0] %f\r\n", vol[0]);
+               for(i = 0; i < CH_NUM; i++)
+               {
+                    if(fabs(vol[i] - arr_vol[i]) > (arr_vol[i] * 0.3))   //电压测量值偏差超过30%
+                    {
+                      if(f_err_vol == 0)
+                      {
+                        //  printf(">>>>vol[%d] %.2f %f\r\n", i, vol[i], arr_vol[i]);
+                          f_err_vol = 1;
+                          T_err = 0;
+                          break;
+                      }
+                    }
+               }
                for(i = 0; i < 7; i++)
                {
                    sprintf(s1, "Vol%d=%.2f,", i, vol[i]);  //s1--10byte
@@ -220,7 +241,7 @@ int main(void)
         T = 0;
         bsp_LedToggle(GREEN);
       }
-//      get_ChannelVale(vol, 0);
+//      get_ChannelVale(vol);
 //      char i = 0;
 //      for(i = 0; i < 7; i++)
 //      {

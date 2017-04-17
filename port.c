@@ -93,11 +93,11 @@ void DCIN_DIS(void)
 }
 void BAT_EN(void)
 {
-  Port_Clear(BAT);
+  Port_Set(BAT);
 }
 void BAT_DIS(void)
 {
-  Port_Set(BAT);
+  Port_Clear(BAT);
 }
 void BOOT_EN(void)
 {
