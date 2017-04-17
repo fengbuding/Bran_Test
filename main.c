@@ -102,29 +102,30 @@ com_err handle_data(void)
         case 1:                                    //1--Burn Firmware Start
                VBUS_EN();
                BAT_DIS();           
-               DCIN_DIS(); 
+               DCIN_EN(); 
                Delay_ms(500);
                strcpy(s,"Success");
                send_ack(s);
                printf("cmd%d ok...\r\n",f_cmd);          
                break;
         case 2:                                     //2--Burn Firmware End
-               BOOT_DIS();             
-                                      //断开boot连接，延时
+               BOOT_DIS();                                   
                strcpy(s, "Success");
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);          
                break;
         case 3:                                     //3--Change Usb A0B0--电池--BAT打开    
+               BAT_EN();  
+               Delay_ms(300);              //使电源稳定，再关闭以前的电源
                VBUS_DIS();
-               DCIN_DIS();                
-               BAT_EN();          
+               DCIN_DIS();                                      
                strcpy(s, "Success");
                send_ack(s);
                printf("cmd%d ok...\r\n", f_cmd);
                break;
         case 4:                                        //4--Change Usb A0B1--USB--VBUS打开
-               VBUS_EN();   
+               VBUS_EN(); 
+               Delay_ms(300);              //使电源稳定，再关闭以前的电源
                DCIN_DIS();
                BAT_DIS();
                strcpy(s, "Success");
@@ -132,8 +133,9 @@ com_err handle_data(void)
                printf("cmd%d ok...\r\n", f_cmd);
                break;
         case 5:                                         //5--Change Usb A1B0--底座--DCIN打开
-               VBUS_DIS();   
                DCIN_EN();
+               Delay_ms(300);              //使电源稳定，再关闭以前的电源
+               VBUS_DIS();   
                BAT_DIS();
                strcpy(s, "Success");
                send_ack(s);
@@ -142,6 +144,7 @@ com_err handle_data(void)
         case 6:                                         //6--Change Usb A1B1--底座+USB打开
                VBUS_EN();   
                DCIN_EN();
+               Delay_ms(300);              //使电源稳定，再关闭以前的电源
                BAT_DIS();                    
                strcpy(s, "Success");
                send_ack(s);
@@ -199,6 +202,7 @@ int main(void)
       if(USART2_RX_STA & 0x8000)
       {
           f_err_vol = 0;
+          bsp_LedOff(BLUE);
           error = handle_data();
           printf("error code: %d\r\n",error);                 
           USART2_RX_STA = 0;
@@ -208,7 +212,7 @@ int main(void)
         if(T_err > 30)
         {
             T_err = 0;
-            bsp_LedToggle(RED);
+            bsp_LedToggle(BLUE);
         }
       }
       if(T > 100)
